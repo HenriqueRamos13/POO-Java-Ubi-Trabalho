@@ -1,0 +1,259 @@
+package Stock;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Arrays;
+import java.io.*;
+
+import Product.Product;
+
+public class Stock {
+	List<Product> productList = new ArrayList<Product>();
+
+	public Stock() {
+		try {
+			File file = new File("./DB/products.txt");
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			FileReader fr = new FileReader(file);
+			BufferedReader br = new BufferedReader(fr);
+			String st;
+			while ((st = br.readLine()) != null) {
+				String[] productInfo = st.split(":");
+
+				Product product = new Product(productInfo[0], productInfo[1], Double.parseDouble(productInfo[2]),
+						Integer.parseInt(productInfo[3]), Integer.parseInt(productInfo[4]),
+						Integer.parseInt(productInfo[5]), Integer.parseInt(productInfo[6]));
+				productList.add(product);
+			}
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public Product createProductTemplate(String prodName, Product toEdit) {
+		double price;
+		int quantity;
+		int year;
+		int month;
+		int day;
+
+		boolean isNewProduct = false;
+		if (prodName == null || prodName.length() == 0) {
+			isNewProduct = true;
+			System.out.println("Enter product name: ");
+			prodName = System.console().readLine();
+
+			while (prodName == null || prodName.length() == 0 || this.verifyProductExist(prodName)) {
+				System.out.println(prodName == null || prodName.length() == 0 ? "Insira um nome válido"
+						: "Produto já cadastrado, insira um novo nome para este produto: ");
+				prodName = System.console().readLine();
+			}
+		}
+
+		System.out.println(
+				"Enter product description" + (isNewProduct ? "" : "(" + toEdit.getDescription() + ")") + ": ");
+		String description = System.console().readLine();
+		if (description == null || description.length() == 0 && !isNewProduct) {
+			description = toEdit.getDescription();
+		}
+
+		try {
+			System.out.println("Enter product price" + (isNewProduct ? "" : "(" + toEdit.getPrice() + ")") + ": ");
+			price = Double.parseDouble(System.console().readLine());
+		} catch (NumberFormatException e) {
+			if (!isNewProduct) {
+				price = toEdit.getPrice();
+			} else {
+				return null;
+			}
+		}
+
+		try {
+			System.out
+					.println("Enter product quantity" + (isNewProduct ? "" : "(" + toEdit.getQuantity() + ")") + ": ");
+			quantity = Integer.parseInt(System.console().readLine());
+		} catch (NumberFormatException e) {
+			if (!isNewProduct) {
+				quantity = toEdit.getQuantity();
+			} else {
+				return null;
+			}
+		}
+
+		try {
+			System.out.println("Enter product year" + (isNewProduct ? "" : "(" + toEdit.getYear() + ")") + ": ");
+			year = Integer.parseInt(System.console().readLine());
+		} catch (NumberFormatException e) {
+			if (!isNewProduct) {
+				year = toEdit.getYear();
+			} else {
+				return null;
+			}
+		}
+
+		try {
+			System.out.println("Enter product month" + (isNewProduct ? "" : "(" + toEdit.getMonth() + ")") + ": ");
+			month = Integer.parseInt(System.console().readLine());
+		} catch (NumberFormatException e) {
+			if (!isNewProduct) {
+				month = toEdit.getMonth();
+			} else {
+				return null;
+			}
+		}
+
+		try {
+			System.out.println("Enter product day" + (isNewProduct ? "" : "(" + toEdit.getDay() + ")") + ": ");
+			day = Integer.parseInt(System.console().readLine());
+		} catch (NumberFormatException e) {
+			if (!isNewProduct) {
+				day = toEdit.getDay();
+			} else {
+				return null;
+			}
+		}
+
+		Product prod = new Product(prodName, description, price, quantity, year, month, day);
+
+		return prod;
+	}
+
+	public void addProduct() {
+		Product prod = createProductTemplate(null, null);
+
+		try {
+			FileWriter fw = new FileWriter("./DB/products.txt", true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			PrintWriter out = new PrintWriter(bw);
+			out.write(prod.getName() + ":" + prod.getDescription() + ":" + prod.getPrice() + ":" + prod.getQuantity()
+					+ ":" + prod.getYear() + ":" + prod.getMonth() + ":" + prod.getDay() + "\n");
+			out.close();
+
+			productList.add(prod);
+		} catch (IOException e) {
+			System.out.println("Error: " + e.getMessage());
+		}
+	}
+
+	public void removeProduct(String name) {
+		boolean productExist = verifyProductExist(name);
+
+		if (productExist) {
+			productList.removeIf(product -> product.getName().equals(name));
+			try {
+				File file = new File("./DB/products.txt");
+				if (!file.exists()) {
+					file.createNewFile();
+				}
+				FileReader fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String st;
+				StringBuilder sb = new StringBuilder();
+				while ((st = br.readLine()) != null) {
+					if (!st.split(":")[0].equals(name)) {
+						sb.append(st + "\n");
+					}
+				}
+				br.close();
+
+				FileWriter fw = new FileWriter("./DB/products.txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw);
+				out.write(sb.toString());
+				out.close();
+			} catch (IOException e) {
+				System.out.println("Error: " + e.getMessage());
+			}
+		} else {
+			System.out.println("Product not found\n\n");
+		}
+
+	}
+
+	public Product getOne(String name) {
+		for (Product product : productList) {
+			if (product.getName().equals(name)) {
+				return product;
+			}
+		}
+		return null;
+	}
+
+	public void findProductByName(String productName) {
+		this.productList.stream().filter(p -> p.getName().equals(productName)).forEach(p -> {
+			System.out.println(p.toString());
+			System.out.println();
+		});
+	}
+
+	public boolean verifyProductExist(String productName) {
+		return this.productList.stream().anyMatch(p -> p.getName().equals(productName));
+	}
+
+	public boolean verifyProductValidateDate(String productName) {
+		Product product = this.productList.stream().filter(p -> p.getName().equals(productName)).findFirst().get();
+		return product.isValid();
+	}
+
+	public void listAllProducts() {
+		this.productList.stream().forEach(p -> {
+			System.out.println(p.toString());
+			System.out.println("-----------------");
+		});
+	}
+
+	public boolean editProduct(String productName, Product product) {
+		boolean productFound = false;
+		for (int i = 0; i < this.productList.size(); i++) {
+			if (this.productList.get(i).getName().equals(productName)) {
+				this.productList.set(i, product);
+				productFound = true;
+			}
+		}
+		if (productFound) {
+			try {
+				File file = new File("./DB/products.txt");
+				if (!file.exists()) {
+					file.createNewFile();
+				}
+				FileReader fr = new FileReader(file);
+				BufferedReader br = new BufferedReader(fr);
+				String st;
+				String newFile = "";
+				while ((st = br.readLine()) != null) {
+					String[] productInfo = st.split(":");
+					if (productInfo[0].equals(productName)) {
+						newFile += product.getName() + ":" + product.getDescription() + ":" + product.getPrice() + ":"
+								+ product.getQuantity() + ":" + product.getYear() + ":" + product.getMonth() + ":"
+								+ product.getDay() + "\n";
+					} else {
+						newFile += st + "\n";
+					}
+				}
+				br.close();
+				FileWriter fw = new FileWriter("./DB/products.txt");
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw);
+				out.write(newFile);
+				out.close();
+				return true;
+			} catch (IOException e) {
+				System.out.println("Error: " + e.getMessage());
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	public List<Product> getProductList() {
+		return productList;
+	}
+
+	public void setProductList(List<Product> productList) {
+		this.productList = productList;
+	}
+}
