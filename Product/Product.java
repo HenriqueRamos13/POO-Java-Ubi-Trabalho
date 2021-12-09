@@ -7,12 +7,14 @@ public class Product {
 	private double price;
 	private int quantity;
 	private Calendar validateDate;
+	private boolean gift;
 
-	public Product(String name, String description, double price, int quantity, int year, int month, int day) {
+	public Product(String name, String description, double price, int quantity, int year, int month, int day, boolean gift) {
 		this.name = name;
 		this.description = description;
 		this.price = price;
 		this.quantity = quantity;
+		this.gift = gift;
 		validateDate = Calendar.getInstance();
 		validateDate.set(year, month - 1, day);
 	}
@@ -67,6 +69,14 @@ public class Product {
 
 	public void setValidateDate(int year, int month, int day) {
 		validateDate.set(year, month, day);
+	}
+
+	public boolean getGift() {
+		return gift;
+	}
+
+	public void setGift(boolean gift) {
+		this.gift = gift;
 	}
 
 	public void changePrice(double percentage) {

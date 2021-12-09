@@ -16,7 +16,7 @@ public class Menu {
 
 		do {
 			System.out.println(
-					"1. Adicionar produto\n2. Remover produto\n3. Listar Produtos\n4. Verificar dados de um produto\n5. Verificar se um produto está valido\n6. Editar produto\n7. Sair\nEnter your choice: \n");
+					"1. Adicionar produto\n2. Remover produto\n3. Listar Produtos\n4. Verificar dados de um produto\n5. Verificar se um produto está valido\n6. Editar produto\n7. Verificar produtos que vão passar da validade\n8. Listar produtos que já passaram da validade\n9. Listar Gifts\n12. Sair\nEnter your choice: \n");
 			try {
 				choice = Integer.parseInt(System.console().readLine());
 			} catch (NumberFormatException e) {
@@ -69,10 +69,11 @@ public class Menu {
 				try {
 					System.out.println("Enter product name: ");
 					String productToVerify = System.console().readLine();
-					if (this.stock.verifyProductValidateDate(productToVerify)) {
-						System.out.println("\nProduto ainda válido\n");
+					int productDaysToValid = this.stock.verifyProductValidateDate(productToVerify);
+					if (productDaysToValid >= 0) {
+						System.out.println("\nProduto ainda válido\nRestam " + productDaysToValid + " dias para o produto expirar\n");
 					} else {
-						System.out.println("\nProduto não válido\n");
+						System.out.println("\nProduto não válido\nJá faz " + Math.abs(productDaysToValid) + " dias que o produto expirou\n");
 					}
 
 					waitEnter();
@@ -87,7 +88,7 @@ public class Menu {
 					Product toEditCopy = this.stock.getOne(toEdit);
 
 					if (toEditCopy != null) {
-						Product newProduct = this.stock.createProductTemplate(toEdit, toEditCopy);
+						Product newProduct = this.stock.createProductTemplate(toEdit, toEditCopy, toEditCopy.getGift());
 
 						this.stock.editProduct(toEdit, newProduct);
 					} else {
@@ -98,13 +99,34 @@ public class Menu {
 				}
 				break;
 			case 7:
+				try {
+					this.stock.getProductsToValidate();
+				} catch (Exception e) {
+					System.out.println("Invalid input\n\n");
+				}
+				break;
+			case 8:
+				try {
+					this.stock.getProductsExpired();
+				} catch (Exception e) {
+					System.out.println("Invalid input\n\n");
+				}
+				break;
+			case 9:
+				try {
+					this.stock.listGifts();
+				} catch (Exception e) {
+					System.out.println("Invalid input\n\n");
+				}
+				break;
+			case 12:
 				System.out.println("You choose exit");
 				break;
 			default:
 				System.out.println("You choose wrong menu");
 				break;
 			}
-		} while (choice != 7);
+		} while (choice != 12);
 	}
 
 	public static void loading(int showText) {

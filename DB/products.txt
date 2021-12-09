@@ -1,6 +1,8 @@
-h:h:12.0:12:2021:12:12
-henrique:test:12.0:12:2022:12:12
-m:mmmm:12.0:12:2020:12:12
-teste:rrrr:11.0:11:2020:11:11
-fefefefe:asfddgfhb:11.0:12:2020:12:12
-rrrrr:rrr:12.0:12:2020:12:12
+h:h:12.0:12:2021:12:12:false
+henrique:test:12.0:12:2022:12:12:false
+m:mmmm:12.0:12:2020:12:12:false
+teste:rrrr:11.0:11:2020:11:11:false
+fefefefe:asfddgfhb:11.0:12:2020:12:12:false
+rrrrr:rrr:12.0:12:2021:12:8:false
+Gift Apple:$50 apple gift:50.0:1:2022:12:31:true:1639052092526
+Gift LOL:Lol gift $100:100.0:1:2020:12:12:true:1639051892526

@@ -4,11 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.io.*;
+import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 import Product.Product;
+import Product.Gifts;
 
 public class Stock {
-	List<Product> productList = new ArrayList<Product>();
+	List<Product> productList = new ArrayList<>();
+	List<Gifts> giftsList = new ArrayList<>();
 
 	public Stock() {
 		try {
@@ -22,10 +27,19 @@ public class Stock {
 			while ((st = br.readLine()) != null) {
 				String[] productInfo = st.split(":");
 
-				Product product = new Product(productInfo[0], productInfo[1], Double.parseDouble(productInfo[2]),
-						Integer.parseInt(productInfo[3]), Integer.parseInt(productInfo[4]),
-						Integer.parseInt(productInfo[5]), Integer.parseInt(productInfo[6]));
-				productList.add(product);
+				if (productInfo.length == 8) {
+					Product product = new Product(productInfo[0], productInfo[1], Double.parseDouble(productInfo[2]),
+							Integer.parseInt(productInfo[3]), Integer.parseInt(productInfo[4]),
+							Integer.parseInt(productInfo[5]), Integer.parseInt(productInfo[6]),
+							Boolean.parseBoolean(productInfo[7]));
+					productList.add(product);
+				} else {
+					Gifts gifts = new Gifts(productInfo[0], productInfo[1], Double.parseDouble(productInfo[2]),
+							Integer.parseInt(productInfo[3]), Integer.parseInt(productInfo[4]),
+							Integer.parseInt(productInfo[5]), Integer.parseInt(productInfo[6]),
+							Boolean.parseBoolean(productInfo[7]), Long.parseLong(productInfo[8]));
+					giftsList.add(gifts);
+				}
 			}
 			br.close();
 		} catch (IOException e) {
@@ -33,7 +47,7 @@ public class Stock {
 		}
 	}
 
-	public Product createProductTemplate(String prodName, Product toEdit) {
+	public Product createProductTemplate(String prodName, Product toEdit, boolean isGift) {
 		double price;
 		int quantity;
 		int year;
@@ -116,25 +130,55 @@ public class Stock {
 			}
 		}
 
-		Product prod = new Product(prodName, description, price, quantity, year, month, day);
+		if (isGift) {
+			Gifts gift = new Gifts(prodName, description, price, quantity, year, month, day, isGift,
+					Calendar.getInstance().getTimeInMillis());
 
+			try {
+				FileWriter fw = new FileWriter("./DB/products.txt", true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw);
+				out.write(
+						gift.getName() + ":" + gift.getDescription() + ":" + gift.getPrice() + ":" + gift.getQuantity()
+								+ ":" + gift.getYear() + ":" + gift.getMonth() + ":" + gift.getDay() + ":"
+								+ gift.getGift() + ":" + gift.getCode() + "\n");
+				out.close();
+
+				giftsList.add(gift);
+			} catch (IOException e) {
+				System.out.println("Error: " + e.getMessage());
+			}
+		}
+
+		Product prod = new Product(prodName, description, price, quantity, year, month, day, isGift);
 		return prod;
 	}
 
 	public void addProduct() {
-		Product prod = createProductTemplate(null, null);
+		boolean isGift = false;
 
 		try {
-			FileWriter fw = new FileWriter("./DB/products.txt", true);
-			BufferedWriter bw = new BufferedWriter(fw);
-			PrintWriter out = new PrintWriter(bw);
-			out.write(prod.getName() + ":" + prod.getDescription() + ":" + prod.getPrice() + ":" + prod.getQuantity()
-					+ ":" + prod.getYear() + ":" + prod.getMonth() + ":" + prod.getDay() + "\n");
-			out.close();
+			System.out.println("Produt is a gift? (false): ");
+			isGift = Boolean.parseBoolean(System.console().readLine());
+		} catch (NumberFormatException e) {
+			System.out.println("Produto definido como não sendo gift.");
+		}
 
-			productList.add(prod);
-		} catch (IOException e) {
-			System.out.println("Error: " + e.getMessage());
+		Product prod = createProductTemplate(null, null, isGift);
+
+		if (!isGift) {
+			try {
+				FileWriter fw = new FileWriter("./DB/products.txt", true);
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter out = new PrintWriter(bw);
+				out.write(prod.getName() + ":" + prod.getDescription() + ":" + prod.getPrice() + ":" + prod.getQuantity()
+						+ ":" + prod.getYear() + ":" + prod.getMonth() + ":" + prod.getDay() + ":" + prod.getGift() + "\n");
+				out.close();
+
+				productList.add(prod);
+			} catch (IOException e) {
+				System.out.println("Error: " + e.getMessage());
+			}
 		}
 	}
 
@@ -193,13 +237,25 @@ public class Stock {
 		return this.productList.stream().anyMatch(p -> p.getName().equals(productName));
 	}
 
-	public boolean verifyProductValidateDate(String productName) {
+	public int verifyProductValidateDate(String productName) {
 		Product product = this.productList.stream().filter(p -> p.getName().equals(productName)).findFirst().get();
-		return product.isValid();
+
+		LocalDate validateDate = LocalDate.of(product.getYear(), product.getMonth(), product.getDay());
+		LocalDate today = LocalDate.now();
+		long days = ChronoUnit.DAYS.between(today, validateDate);
+		return (int) days;
+
 	}
 
 	public void listAllProducts() {
 		this.productList.stream().forEach(p -> {
+			System.out.println(p.toString());
+			System.out.println("-----------------");
+		});
+	}
+
+	public void listGifts() {
+		this.giftsList.stream().forEach(p -> {
 			System.out.println(p.toString());
 			System.out.println("-----------------");
 		});
@@ -249,11 +305,18 @@ public class Stock {
 		}
 	}
 
-	public List<Product> getProductList() {
-		return productList;
+	public void getProductsToValidate() {
+		this.productList.stream().filter(p -> this.verifyProductValidateDate(p.getName()) < 10
+				&& this.verifyProductValidateDate(p.getName()) > -1).forEach(p -> {
+					System.out.println(p.toString());
+					System.out.println("-----------------");
+				});
 	}
 
-	public void setProductList(List<Product> productList) {
-		this.productList = productList;
+	public void getProductsExpired() {
+		this.productList.stream().filter(p -> this.verifyProductValidateDate(p.getName()) < 0).forEach(p -> {
+			System.out.println(p.toString());
+			System.out.println("-----------------");
+		});
 	}
 }
